@@ -9,28 +9,66 @@ import XCTest
 @testable import CreateObservable
 
 class CreateObservableTests: XCTestCase {
+    var expect: XCTestExpectation!
 
     override func setUpWithError() throws {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
+        expect = expectation(description: "")
+        // 2回実行されるか検証
+        expect.expectedFulfillmentCount = 1
     }
 
     override func tearDownWithError() throws {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
     }
 
-    func testExample() throws {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-        // Any test you write for XCTest can be annotated as throws and async.
-        // Mark your test throws to produce an unexpected failure when your test encounters an uncaught error.
-        // Mark your test async to allow awaiting for asynchronous code to complete. Check the results with assertions afterwards.
-    }
+    // AnyObserverによるsubscribeとクロージャによるsubscribeの2つでそれぞれonNextとonCompletedの
+    // 2ヶ所が実行されrているか検証する(計4回)
+//    func testExample() throws {
+//        // ランダムな整数を文字列とする
+//        let observable = Observable.just(2)
+//
+//        let observer = AnyObserver { [weak self] (event: Event<Int>) in
+//            switch event {
+//            case .next(let element):
+//                XCTAssertEqual(element, 2)
+//                self?.expect.fulfill()
+//            case .completed:
+//                self?.expect.fulfill()
+//            }
+//        }
+//
+//        // AnyObserver型はObservableのストリームを購読するようにし、そのストリームの内容はEvent型とする
+//        // subscribeメソッドでAnyObserver型で購読するようにsうる
+//        observable.subscribe(observer)
+//
+//        observable.subscribe(onNext: { [weak self] in
+//            XCTAssertEqual($0, 2)
+//            self?.expect.fulfill()
+//        }, onCompleted: { [weak self] in
+//            //
+//            self?.expect.fulfill()
+//        })
+//
+//        waitForExpectations(timeout: 0.1)
+//    }
 
-    func testPerformanceExample() throws {
-        // This is an example of a performance test case.
-        self.measure {
-            // Put the code you want to measure the time of here.
+    func test() {
+        let observable = Observable.of(1, 2, 3)
+
+        var output = [Int]()
+
+        let observer = AnyObserver { (event: Event<Int>) in
+            switch event {
+            case .next(let element):
+                output.append(element)
+            case .completed:
+                XCTAssertEqual(output, [1, 2, 3])
+                self.expect.fulfill()
+            }
         }
-    }
 
+        observable.subscribe(observer)
+
+        waitForExpectations(timeout: 0.1)
+    }
 }
